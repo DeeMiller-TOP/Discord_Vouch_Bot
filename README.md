@@ -1,46 +1,82 @@
-# Discord Vouch Bot
+# Vouch HQ Discord Bot
 
-A Discord bot that allows users to create and manage vouches for other users across multiple servers.
+A multi-server reputation bot for communities that trade, middleman, or provide services.
 
-## Features
+This version is built to be **shared across many servers** and connected to a central **Support / HQ server** where users can:
+- verify trust using cross-server vouches,
+- report suspicious users,
+- check scam risk before dealing.
 
-- Create vouches for users with custom messages
-- View vouches for specific users in the current server
-- View all vouches for a user across all servers
-- Persistent storage using SQLite database
-- Beautiful embed messages for vouch display
+## Why this is better
+
+- ✅ Slash-command first UX (easy for non-technical server owners)
+- ✅ Cross-server reputation lookups
+- ✅ Scam reporting workflow with report IDs
+- ✅ Trusted-voucher system (admins control who can submit vouches)
+- ✅ Invite + support server command for growth (`/botinfo`)
+- ✅ SQLite persistence out of the box
+
+## Commands
+
+### Reputation
+- `/vouch user message rating`  
+  Create a vouch (trusted vouchers or admins only).
+- `/vouches [user]`  
+  View recent vouches for a user in the current server.
+- `/allvouches [user]`  
+  View cross-server vouches for a user.
+- `/scammercheck user`  
+  See total vouches, average rating, and open scam reports.
+
+### Safety / Moderation
+- `/reportscammer user reason [evidence]`  
+  Submit a scam report to HQ database (returns report ID).
+- `/trusted user action(add/remove)` *(admin only)*  
+  Control who can issue official vouches in your server.
+
+### Utility
+- `/botinfo`  
+  Shows bot invite + support/HQ invite links.
+- `/restart` *(owner only)*
 
 ## Setup
 
-1. Clone this repository
-2. Install the required dependencies:
+1. Clone repository and install deps:
    ```bash
    pip install -r requirements.txt
    ```
-3. Create a `.env` file in the root directory and add your Discord bot token:
+
+2. Create `.env`:
+   ```env
+   DISCORD_TOKEN=your_bot_token
+   OWNER_ID=your_discord_user_id
+   BOT_INVITE_URL=https://discord.com/oauth2/authorize?client_id=YOUR_CLIENT_ID&permissions=274878024704&integration_type=0&scope=bot+applications.commands
+   SUPPORT_SERVER_INVITE=https://discord.gg/your-support-server
+   DATABASE_PATH=vouches.db
    ```
-   DISCORD_TOKEN=your_bot_token_here
-   ```
-4. Run the bot:
+
+3. Run bot:
    ```bash
    python bot.py
    ```
 
-## Commands
+## Recommended HQ server structure
 
-- `!vouch @user message` - Create a vouch for a user
-- `!vouches [@user]` - View vouches for a user in the current server (defaults to yourself if no user is specified)
-- `!allvouches [@user]` - View all vouches for a user across all servers (defaults to yourself if no user is specified)
+For your support/HQ Discord server, create:
+- `#start-here` (how to use bot + rules)
+- `#vouch-lookup` (where users run `/scammercheck`)
+- `#report-a-scammer` (guide to `/reportscammer` + evidence rules)
+- `#resolved-cases` (public trust transparency)
+- `#bot-support` (technical support)
 
-## Requirements
+## Required Discord intents
 
-- Python 3.8 or higher
-- discord.py
-- python-dotenv
-- aiosqlite
+Enable in Discord Developer Portal:
+- **Server Members Intent**
+- **Message Content Intent**
 
-## Note
+## Notes
 
-Make sure to enable the following intents in your Discord Developer Portal:
-- Message Content Intent
-- Server Members Intent 
+- By default, only trusted vouchers and admins can submit vouches.
+- Keep evidence links permanent (Imgur, Drive with public read, etc.) for moderation reviews.
+- For production scale, migrate from SQLite to Postgres.
