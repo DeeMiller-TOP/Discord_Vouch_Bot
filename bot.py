@@ -20,7 +20,7 @@ class VouchBot(commands.Bot):
 
     async def is_owner(self, user: discord.User) -> bool:
         """Check if the user is the bot owner"""
-        return user.id == int(os.getenv('OWNER_ID', '0'))
+       return user.id == 706877545693446389
 
 bot = VouchBot(command_prefix='!', intents=intents)
 
