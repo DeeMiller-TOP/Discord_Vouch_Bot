@@ -1,82 +1,71 @@
 # Vouch HQ Discord Bot
 
-A multi-server reputation bot for communities that trade, middleman, or provide services.
+A production-ready Discord reputation bot built for **multi-server adoption** with a central **HQ/support server** for scam checks, moderation, and dispute handling.
 
-This version is built to be **shared across many servers** and connected to a central **Support / HQ server** where users can:
-- verify trust using cross-server vouches,
-- report suspicious users,
-- check scam risk before dealing.
+## What’s improved
 
-## Why this is better
-
-- ✅ Slash-command first UX (easy for non-technical server owners)
-- ✅ Cross-server reputation lookups
-- ✅ Scam reporting workflow with report IDs
-- ✅ Trusted-voucher system (admins control who can submit vouches)
-- ✅ Invite + support server command for growth (`/botinfo`)
-- ✅ SQLite persistence out of the box
+- Slash command UX for easier setup by server owners
+- Cross-server vouch checks (`/allvouches`)
+- Scam reporting pipeline with report IDs (`/reportscammer`)
+- Optional live forwarding of scam reports to your HQ channel (`HQ_REPORT_CHANNEL_ID`)
+- Trusted voucher gate per server (`/trusted`) so not everyone can issue official vouches
+- Duplicate-vouch prevention by upserting one vouch per voucher/target/server
+- Report status management for owner moderation workflow (`/setreportstatus`)
 
 ## Commands
 
 ### Reputation
-- `/vouch user message rating`  
-  Create a vouch (trusted vouchers or admins only).
-- `/vouches [user]`  
-  View recent vouches for a user in the current server.
-- `/allvouches [user]`  
-  View cross-server vouches for a user.
-- `/scammercheck user`  
-  See total vouches, average rating, and open scam reports.
+- `/vouch user message rating` — create/update your official vouch
+- `/vouches [user]` — show recent vouches in current server
+- `/allvouches [user]` — show cross-server reputation
+- `/scammercheck user` — summary: vouches + average + open reports
+- `/reports user` — view latest 5 reports for a user
 
 ### Safety / Moderation
-- `/reportscammer user reason [evidence]`  
-  Submit a scam report to HQ database (returns report ID).
-- `/trusted user action(add/remove)` *(admin only)*  
-  Control who can issue official vouches in your server.
+- `/reportscammer user reason [evidence]` — submit scam report
+- `/trusted user action(add/remove)` *(admin only)* — manage who can vouch
+- `/setreportstatus report_id status` *(owner only)* — set report to `open`, `under_review`, `resolved`, `rejected`
 
 ### Utility
-- `/botinfo`  
-  Shows bot invite + support/HQ invite links.
+- `/botinfo` — bot invite and support/HQ invite
 - `/restart` *(owner only)*
 
 ## Setup
 
-1. Clone repository and install deps:
+1. Install dependencies:
    ```bash
    pip install -r requirements.txt
    ```
 
-2. Create `.env`:
+2. Configure `.env`:
    ```env
    DISCORD_TOKEN=your_bot_token
    OWNER_ID=your_discord_user_id
    BOT_INVITE_URL=https://discord.com/oauth2/authorize?client_id=YOUR_CLIENT_ID&permissions=274878024704&integration_type=0&scope=bot+applications.commands
    SUPPORT_SERVER_INVITE=https://discord.gg/your-support-server
+   HQ_REPORT_CHANNEL_ID=123456789012345678
    DATABASE_PATH=vouches.db
    ```
 
-3. Run bot:
+3. Run:
    ```bash
    python bot.py
    ```
 
-## Recommended HQ server structure
+## Recommended HQ server channels
 
-For your support/HQ Discord server, create:
-- `#start-here` (how to use bot + rules)
-- `#vouch-lookup` (where users run `/scammercheck`)
-- `#report-a-scammer` (guide to `/reportscammer` + evidence rules)
-- `#resolved-cases` (public trust transparency)
-- `#bot-support` (technical support)
+- `#start-here` — how to use commands
+- `#check-reputation` — users run `/scammercheck`
+- `#scam-reports` — channel ID used in `HQ_REPORT_CHANNEL_ID`
+- `#case-updates` — resolved/rejected report transparency
+- `#bot-support` — setup help for server owners
 
-## Required Discord intents
+## Intents
 
 Enable in Discord Developer Portal:
 - **Server Members Intent**
-- **Message Content Intent**
 
 ## Notes
 
-- By default, only trusted vouchers and admins can submit vouches.
-- Keep evidence links permanent (Imgur, Drive with public read, etc.) for moderation reviews.
-- For production scale, migrate from SQLite to Postgres.
+- This bot is designed for server owners to add and immediately use with slash commands.
+- For large scale, move persistence from SQLite to Postgres.
