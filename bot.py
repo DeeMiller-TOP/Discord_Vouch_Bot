@@ -109,6 +109,18 @@ def report_embed(report_id: int, reporter: discord.abc.User, reported: discord.a
     return embed
 
 
+async def notify_owner_about_report(report_id: int, reporter: discord.abc.User, reported: discord.abc.User, reason: str, evidence: str, guild_name: str) -> None:
+    if OWNER_ID == 0:
+        return
+
+    try:
+        owner_user = bot.get_user(OWNER_ID) or await bot.fetch_user(OWNER_ID)
+        if owner_user:
+            await owner_user.send(embed=report_embed(report_id, reporter, reported, reason, evidence, guild_name))
+    except (discord.Forbidden, discord.HTTPException):
+        pass
+
+
 def stats_embed(title: str, member: discord.abc.User, count: int, avg_rating: float) -> discord.Embed:
     embed = discord.Embed(title=title, color=discord.Color.blurple())
     embed.set_thumbnail(url=member.display_avatar.url)
@@ -274,6 +286,9 @@ async def reportscammer(interaction: discord.Interaction, user: discord.User, re
         async with db.execute("SELECT last_insert_rowid()") as cursor:
             report_id = (await cursor.fetchone())[0]
 
+    report_reason = reason[:400]
+    report_evidence = (evidence or "")[:500]
+
     if HQ_REPORT_CHANNEL_ID:
         channel = bot.get_channel(HQ_REPORT_CHANNEL_ID)
         if isinstance(channel, discord.TextChannel):
@@ -282,14 +297,23 @@ async def reportscammer(interaction: discord.Interaction, user: discord.User, re
                     report_id,
                     interaction.user,
                     user,
-                    reason[:400],
-                    (evidence or "")[:500],
+                    report_reason,
+                    report_evidence,
                     interaction.guild.name,
                 )
             )
 
+    await notify_owner_about_report(
+        report_id,
+        interaction.user,
+        user,
+        report_reason,
+        report_evidence,
+        interaction.guild.name,
+    )
+
     await interaction.response.send_message(
-        f"🚨 Report submitted. ID: **#{report_id}**. HQ moderators will review it.",
+        f"🚨 Report submitted. ID: **#{report_id}**. Sent to owner for approve/deny review.",
         ephemeral=True,
     )
 
@@ -380,30 +404,40 @@ async def trusted(interaction: discord.Interaction, user: discord.Member, action
     await interaction.response.send_message(msg, ephemeral=True)
 
 
-@bot.tree.command(name="setreportstatus", description="Update scam report status (Owner only).")
-@app_commands.describe(report_id="Report ID", status="open, under_review, resolved, rejected")
-@app_commands.choices(
-    status=[
-        app_commands.Choice(name="open", value="open"),
-        app_commands.Choice(name="under_review", value="under_review"),
-        app_commands.Choice(name="resolved", value="resolved"),
-        app_commands.Choice(name="rejected", value="rejected"),
-    ]
-)
-async def setreportstatus(interaction: discord.Interaction, report_id: int, status: str) -> None:
+@bot.tree.command(name="approvereport", description="Approve a scam report (Owner only).")
+@app_commands.describe(report_id="Report ID to approve")
+async def approvereport(interaction: discord.Interaction, report_id: int) -> None:
     if not await bot.is_owner(interaction.user):
-        await interaction.response.send_message("Only the bot owner can update report status.", ephemeral=True)
+        await interaction.response.send_message("Only the bot owner can approve reports.", ephemeral=True)
         return
 
     async with aiosqlite.connect(DATABASE_PATH) as db:
-        cursor = await db.execute("UPDATE scam_reports SET status = ? WHERE id = ?", (status, report_id))
+        cursor = await db.execute("UPDATE scam_reports SET status = 'resolved' WHERE id = ?", (report_id,))
         await db.commit()
 
     if cursor.rowcount == 0:
         await interaction.response.send_message("Report ID not found.", ephemeral=True)
         return
 
-    await interaction.response.send_message(f"✅ Report #{report_id} set to `{status}`.", ephemeral=True)
+    await interaction.response.send_message(f"✅ Report #{report_id} approved and marked as `resolved`.", ephemeral=True)
+
+
+@bot.tree.command(name="denyreport", description="Deny a scam report (Owner only).")
+@app_commands.describe(report_id="Report ID to deny")
+async def denyreport(interaction: discord.Interaction, report_id: int) -> None:
+    if not await bot.is_owner(interaction.user):
+        await interaction.response.send_message("Only the bot owner can deny reports.", ephemeral=True)
+        return
+
+    async with aiosqlite.connect(DATABASE_PATH) as db:
+        cursor = await db.execute("UPDATE scam_reports SET status = 'rejected' WHERE id = ?", (report_id,))
+        await db.commit()
+
+    if cursor.rowcount == 0:
+        await interaction.response.send_message("Report ID not found.", ephemeral=True)
+        return
+
+    await interaction.response.send_message(f"🛑 Report #{report_id} denied and marked as `rejected`.", ephemeral=True)
 
 
 @bot.tree.command(name="restart", description="Restart the bot (Owner only).")

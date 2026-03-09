@@ -10,7 +10,7 @@ A production-ready Discord reputation bot built for **multi-server adoption** wi
 - Optional live forwarding of scam reports to your HQ channel (`HQ_REPORT_CHANNEL_ID`)
 - Trusted voucher gate per server (`/trusted`) so not everyone can issue official vouches
 - Duplicate-vouch prevention by upserting one vouch per voucher/target/server
-- Report status management for owner moderation workflow (`/setreportstatus`)
+- Owner review workflow: reports are sent to owner DMs, with `/approvereport` and `/denyreport`
 
 ## Commands
 
@@ -24,7 +24,8 @@ A production-ready Discord reputation bot built for **multi-server adoption** wi
 ### Safety / Moderation
 - `/reportscammer user reason [evidence]` — submit scam report
 - `/trusted user action(add/remove)` *(admin only)* — manage who can vouch
-- `/setreportstatus report_id status` *(owner only)* — set report to `open`, `under_review`, `resolved`, `rejected`
+- `/approvereport report_id` *(owner only)* — approve report (marks `resolved`)
+- `/denyreport report_id` *(owner only)* — deny report (marks `rejected`)
 
 ### Utility
 - `/botinfo` — bot invite and support/HQ invite
@@ -43,7 +44,7 @@ A production-ready Discord reputation bot built for **multi-server adoption** wi
    OWNER_ID=your_discord_user_id
    BOT_INVITE_URL=https://discord.com/oauth2/authorize?client_id=YOUR_CLIENT_ID&permissions=274878024704&integration_type=0&scope=bot+applications.commands
    SUPPORT_SERVER_INVITE=https://discord.gg/your-support-server
-   HQ_REPORT_CHANNEL_ID=123456789012345678
+   HQ_REPORT_CHANNEL_ID=123456789012345678  # optional public HQ feed (owner DMs are always used)
    DATABASE_PATH=vouches.db
    ```
 
